@@ -30,7 +30,7 @@ import pandas as pd
 from datetime import datetime
 import os
 
-def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, output_folder: str = "./options-chains", date: str = None):
+def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, strike_offset: int = None, output_folder: str = "./options-chains", date: str = None):
     """
     Exports 0DTE call and put options around ATM to TOS watchlist text files.
 
@@ -66,6 +66,9 @@ def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, output_folder: st
     underlying_price = ticker.history(period="1d")["Close"].iloc[-1]
     atm_strike = min(calls['strike'], key=lambda x: abs(x - underlying_price))
 
+    if strike_offset is not None:
+        atm_strike += strike_offset
+    
     # 6. Select n_strikes above and below ATM
     def get_strikes(df, atm, n):
         strikes = sorted(df['strike'].unique())
@@ -93,7 +96,8 @@ def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, output_folder: st
 
     calls['TOS_symbol'].to_csv(calls_file, index=False, header=False)
     puts['TOS_symbol'].to_csv(puts_file, index=False, header=False)
-
+    
+    print(f"ATM strike set to: {atm_strike}")
     print(f"Exported {len(calls)} calls → {calls_file}")
     print(f"Exported {len(puts)} puts → {puts_file}")
 
@@ -103,4 +107,4 @@ def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, output_folder: st
 # export_tos_0dte_watchlist(symbol="SPY", n_strikes=5)
 
 # Or specify an expiration date
-export_tos_0dte_watchlist(symbol="SPY", n_strikes=5, date="2025-10-06")
+export_tos_0dte_watchlist(symbol="SPY", n_strikes=5, strike_offset=2, date="2025-10-06")
