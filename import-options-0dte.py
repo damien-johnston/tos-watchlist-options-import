@@ -30,7 +30,7 @@ import pandas as pd
 from datetime import datetime
 import os
 
-def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, strike_offset: int = None, output_folder: str = "./options-chains", date: str = None):
+def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, strike_offset: int = None, output_folder: str = "./options-chains", date: str = None, option_expiration_type = ''):
     """
     Exports 0DTE call and put options around ATM to TOS watchlist text files.
 
@@ -82,13 +82,16 @@ def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, strike_offset: in
     puts = puts[puts['strike'].isin(selected_strikes)]
 
     # 7. Format TOS symbol
-    def format_tos_symbol(row, cp_flag):
+    def format_tos_symbol(row, cp_flag, option_expiration_type):
         exp_date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%y%m%d")
         strike = int(row['strike']) if row['strike'].is_integer() else row['strike']
-        return f".{symbol}{exp_date}{cp_flag}{strike}"
+        # Clean up the symbol for TOS format
+        symbol_clean = symbol.replace("^", "") + option_expiration_type
+        
+        return f".{symbol_clean}{exp_date}{cp_flag}{strike}"
 
-    calls['TOS_symbol'] = calls.apply(lambda r: format_tos_symbol(r, "C"), axis=1)
-    puts['TOS_symbol'] = puts.apply(lambda r: format_tos_symbol(r, "P"), axis=1)
+    calls['TOS_symbol'] = calls.apply(lambda r: format_tos_symbol(r, "C", option_expiration_type), axis=1)
+    puts['TOS_symbol'] = puts.apply(lambda r: format_tos_symbol(r, "P", option_expiration_type), axis=1)
 
     # 8. Export to TOS watchlist files
     calls_file = os.path.join(output_folder, f"{symbol}_CALLS_watchlist_{date_str}.txt")
@@ -107,4 +110,13 @@ def export_tos_0dte_watchlist(symbol: str, n_strikes: int = 5, strike_offset: in
 # export_tos_0dte_watchlist(symbol="SPY", n_strikes=5)
 
 # Or specify an expiration date
-export_tos_0dte_watchlist(symbol="SPY", n_strikes=5, strike_offset=2, date="2025-10-06")
+# spy
+export_tos_0dte_watchlist(symbol="SPY", n_strikes=7, strike_offset=2
+                          #,date="2025-10-13"
+                          )
+
+# spx
+export_tos_0dte_watchlist(symbol="^SPX", 
+                          n_strikes=5, strike_offset=20, 
+                          #date="2025-10-13",
+                          option_expiration_type = 'W')
